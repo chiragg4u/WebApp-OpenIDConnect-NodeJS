@@ -37,10 +37,6 @@ var util = require('util');
 var bunyan = require('bunyan');
 var config = require('./config');
 
-// set up database for express session
-var MongoStore = require('connect-mongo')(expressSession);
-var mongoose = require('mongoose');
-
 // Start QuickStart here
 
 var OIDCStrategy = require('passport-azure-ad').OIDCStrategy;
@@ -48,6 +44,9 @@ var OIDCStrategy = require('passport-azure-ad').OIDCStrategy;
 var log = bunyan.createLogger({
     name: 'Microsoft OIDC Example Web Application'
 });
+
+var fs = require('fs');
+
 
 /******************************************************************************
  * Set up passport in the app 
@@ -82,6 +81,9 @@ var findByOid = function(oid, fn) {
   }
   return fn(null, null);
 };
+
+var access_token = "";
+var refresh_token = "";
 
 //-----------------------------------------------------------------------------
 // Use the OIDCStrategy within Passport.
@@ -124,12 +126,26 @@ passport.use(new OIDCStrategy({
     if (!profile.oid) {
       return done(new Error("No oid found"), null);
     }
+    
     // asynchronous verification, for effect...
     process.nextTick(function () {
       findByOid(profile.oid, function(err, user) {
         if (err) {
           return done(err);
         }
+        console.log("accessToken :", accessToken )
+        console.log("refreshToken :", refreshToken )
+        // Wrtie the accesstoken into a file
+        /// write to file
+        fs.writeFile("C:\\AGSTest\\store\\token.txt", accessToken, function(err) {
+          if(err) {
+              return console.log(err);
+          }
+      
+          console.log("The file was saved!");
+      });             
+        access_token = accessToken;
+        refresh_token = refreshToken;
         if (!user) {
           // "Auto-registration"
           users.push(profile);
@@ -152,21 +168,6 @@ app.set('view engine', 'ejs');
 app.use(express.logger());
 app.use(methodOverride());
 app.use(cookieParser());
-
-// set up session middleware
-if (config.useMongoDBSessionStore) {
-  mongoose.connect(config.databaseUri);
-  app.use(express.session({
-    secret: 'secret',
-    cookie: {maxAge: config.mongoDBSessionMaxAge * 1000},
-    store: new MongoStore({
-      mongooseConnection: mongoose.connection,
-      clear_interval: config.mongoDBSessionMaxAge
-    })
-  }));
-} else {
-  app.use(expressSession({ secret: 'keyboard cat', resave: true, saveUninitialized: false }));
-}
 
 app.use(bodyParser.urlencoded({ extended : true }));
 
@@ -193,13 +194,19 @@ function ensureAuthenticated(req, res, next) {
   res.redirect('/login');
 };
 
+
+app.get('/*',function(req,res,next){
+  res.set('Access-Control-Allow-Origin', '*');
+  next();
+});
+
 app.get('/', function(req, res) {
   res.render('index', { user: req.user });
 });
 
 // '/account' is only available to logged in user
 app.get('/account', ensureAuthenticated, function(req, res) {
-  res.render('account', { user: req.user });
+  res.render('account', { user: req.user, token: access_token, refreshToken: refresh_token });
 });
 
 app.get('/login',
@@ -255,12 +262,36 @@ app.post('/auth/openid/return',
   });
 
 // 'logout' route, logout from passport, and destroy the session with AAD.
-app.get('/logout', function(req, res){
+app.get('/logout', function(req, res){  
   req.session.destroy(function(err) {
     req.logOut();
     res.redirect(config.destroySessionUrl);
   });
 });
 
-app.listen(3000);
+app.options('/token', function(req, res){
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', '*');
+  res.set('Access-Control-Allow-Methods', '*');
+  next();
+});
+
+app.get('/token', function(req, res){
+  if(access_token == ""){
+    fs.readFile("C:\\AGSTest\\store\\token.txt", function(err, data) {
+      if(err) {
+          return console.log(err);
+      }
+      access_token  = data.toString();
+      console.log("Set the access_token to " + access_token);
+      res.send(JSON.stringify(access_token));
+      res.end();        
+  });
+  } else{  
+  res.send(JSON.stringify(access_token));
+  res.end();  
+  }
+});
+
+app.listen(30001);
 

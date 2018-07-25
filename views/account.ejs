@@ -4,6 +4,8 @@
 <% } else { %>
 <p>UPN: <%= user._json.upn %></p>
 <p>Profile ID: <%= user.id %></p>
+<p>AccessToken: <%= token %></p>
+<p>RefreshToken: <%= refreshToken %></p>
 <p>Full Claimes</p>
 <%- JSON.stringify(user) %>
 <p></p>

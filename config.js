@@ -1,7 +1,7 @@
 
 exports.creds = {
   // Required
-  identityMetadata: 'https://login.microsoftonline.com/<tenant_name>.onmicrosoft.com/.well-known/openid-configuration', 
+  identityMetadata: 'https://login.microsoftonline.com/microsoft.onmicrosoft.com/.well-known/openid-configuration', 
   // or equivalently: 'https://login.microsoftonline.com/<tenant_guid>/.well-known/openid-configuration'
   //
   // or you can use the common endpoint
@@ -9,7 +9,7 @@ exports.creds = {
   // To use the common endpoint, you have to either set `validateIssuer` to false, or provide the `issuer` value.
 
   // Required, the client ID of your app in AAD  
-  clientID: '<your_client_id>',
+  clientID: '35574b15-d5ef-43a9-96e5-0a4574d4c352',
 
   // Required, must be 'code', 'code id_token', 'id_token code' or 'id_token' 
   responseType: 'code id_token', 
@@ -18,14 +18,14 @@ exports.creds = {
   responseMode: 'form_post', 
 
   // Required, the reply URL registered in AAD for your app
-  redirectUrl: 'http://localhost:3000/auth/openid/return', 
+  redirectUrl: 'http://localhost:30001/auth/openid/return', 
 
   // Required if we use http for redirectUrl
   allowHttpForRedirectUrl: true,
   
   // Required if `responseType` is 'code', 'id_token code' or 'code id_token'. 
   // If app key contains '\', replace it with '\\'.
-  clientSecret: '<your_client_secret>', 
+  clientSecret: 'qF49Z6t0+F0T1oGBRNB51+J24eT7q4WrjXY0BS21ce8=', 
 
   // Required to set to false if you don't want to validate issuer
   validateIssuer: true,
@@ -73,18 +73,9 @@ exports.creds = {
 // If you want to get access_token for a specific resource, you can provide the resource here; otherwise, 
 // set the value to null.
 // Note that in order to get access_token, the responseType must be 'code', 'code id_token' or 'id_token code'.
-exports.resourceURL = 'https://graph.windows.net';
+//exports.resourceURL = 'https://graph.windows.net';
+exports.resourceURL = 'https://management.core.windows.net/';
 
 // The url you need to go to destroy the session with AAD
 exports.destroySessionUrl = 'https://login.microsoftonline.com/common/oauth2/logout?post_logout_redirect_uri=http://localhost:3000';
 
-// If you want to use the mongoDB session store for session middleware; otherwise we will use the default
-// session store provided by express-session.
-// Note that the default session store is designed for development purpose only.
-exports.useMongoDBSessionStore = true;
-
-// If you want to use mongoDB, provide the uri here for the database.
-exports.databaseUri = 'mongodb://localhost/OIDCStrategy';
-
-// How long you want to keep session in mongoDB.
-exports.mongoDBSessionMaxAge = 24 * 60 * 60;  // 1 day (unit is second)
